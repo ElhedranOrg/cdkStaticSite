@@ -6,27 +6,33 @@ import * as Route53 from '@aws-cdk/aws-route53';
 import * as Route53Targets from '@aws-cdk/aws-route53-targets';
 import * as CertManager from '@aws-cdk/aws-certificatemanager';
 import * as Lambda from '@aws-cdk/aws-lambda';
-import * as IAM from '@aws-cdk/aws-iam';
+import * as CustomResources from '@aws-cdk/custom-resources';
+
 import * as path from 'path';
-import { Stack } from '@aws-cdk/core';
+
+import { SpaStack } from './SpaStack';
 
 export interface StaticSiteProps {
     /**
      * The domain of the hosted zone to add routes for
      */
     zoneDomain: string,
+
     /**
      * The domain to register for the site
      */
     siteDomain: string,
-    /**
-     * The bucket name to use for site contents
-     */
-    bucketName: string,
+
     /**
      * The path for assets to deploy as static site contents
      */
-    assetPath: string,
+    assetPath?: string,
+
+    /**
+     * The bucket name to use for site contents
+     */
+    bucketName?: string,
+
     /**
      * A prefix for naming resources deployed
      */
@@ -51,7 +57,51 @@ export class StaticSite extends Core.Construct {
     constructor(scope: Core.Construct, id: string, props: StaticSiteProps) {
         super(scope, id);
 
-        const prefix = props.siteName || 'staticsite';
+        const siteName = props?.siteName || 'staticsite';
+        const parameterName = `${siteName}-spaEdgeArn`;
+        const assetPath =
+            props?.assetPath
+            || path.resolve(__dirname, 'assets', 'sampleContent')
+
+        const scopeStack = Core.Stack.of(scope);
+        const spaStack = new SpaStack(
+            this, id + '-spaEdge',
+            {
+                env: {
+                    region: 'us-east-1',
+                    account: scopeStack.account
+                }
+            }
+        );
+
+        const edgeVersionArnResource = new CustomResources.AwsCustomResource(
+            this,
+            "GetParameter",
+            {
+                onUpdate: {
+                    // will also be called for a CREATE event
+                    service: "SSM",
+                    action: "getParameter",
+                    parameters: {
+                        Name: parameterName
+                    },
+                    region: "us-east-1",
+                    physicalResourceId: CustomResources.PhysicalResourceId.of(
+                        spaStack.versionTag // only need to update if version tag changes
+                    )
+                },
+                policy: CustomResources.AwsCustomResourcePolicy.fromSdkCalls({
+                    resources: CustomResources.AwsCustomResourcePolicy.ANY_RESOURCE
+                })
+            }
+        );
+
+        const edgeVersionArn = edgeVersionArnResource.getResponseField('Parameter.Value');
+        const spaEdgeVersion = Lambda.Version.fromVersionArn(
+            this, 'spaEdgeVersion', edgeVersionArn
+        );
+
+        Core.Stack.of(this).addDependency(spaStack);
 
         const hostedZone = Route53.HostedZone.fromLookup(this, 'zone', {
             domainName: props.zoneDomain
@@ -71,47 +121,16 @@ export class StaticSite extends Core.Construct {
             this,
             'OriginAccessIdentity',
             {
-                comment: `${prefix} static site origin access idenity`
+                comment: `${siteName} static site origin access idenity`
             }
         );
 
         destinationBucket.grantRead(originAccessIdentity);
 
-        const spaCode = Lambda.Code.fromAsset(path.resolve(
-            __dirname,
-            'assets',
-            'spaHandler'
-        ));
-
-        /*
-        TODO
-        Create a new stack in us-est
-        deploy lambda in that stack
-        export arn+version from that stack
-        import it into this stack
-        use imported arn for distribution
-        */
-        const spaEdge = new Lambda.Function(this, 'spaHandler', {
-            functionName: `${prefix}-spaEdge`,
-            runtime: Lambda.Runtime.NODEJS_12_X,
-            handler: 'index.handler',
-            code: spaCode,
-            role: new IAM.Role(this, 'spaHandlerRole', {
-                assumedBy: new IAM.CompositePrincipal(
-                    new IAM.ServicePrincipal('lambda.amazonaws.com'),
-                    new IAM.ServicePrincipal('edgelambda.amazonaws.com'),
-                ),
-            }),
-        });
-        
-        const spaEdgeVersion = new Lambda.Version(this, 'v1', {
-            lambda: spaEdge
-        });
-        spaEdgeVersion.addAlias('live');
 
         const distribution = new CloudFront.CloudFrontWebDistribution(this, 'distribution', {
             defaultRootObject: 'index.html',
-            comment: `${prefix} static site web distribution`,
+            comment: `${siteName} static site web distribution`,
             viewerProtocolPolicy: CloudFront.ViewerProtocolPolicy.REDIRECT_TO_HTTPS,
             aliasConfiguration: {
                 acmCertRef: cert.certificateArn,
@@ -149,12 +168,19 @@ export class StaticSite extends Core.Construct {
                 new Route53Targets.CloudFrontTarget(distribution)
             ),
             recordName: props.siteDomain
-        })
+        });
+        new Route53.AaaaRecord(this, 'ipv6Alias', {
+            zone: hostedZone,
+            target: Route53.RecordTarget.fromAlias(
+                new Route53Targets.CloudFrontTarget(distribution)
+            ),
+            recordName: props.siteDomain
+        });
 
         new S3Deployment.BucketDeployment(this, 'deploy', {
             destinationBucket,
             distribution,
-            sources: [S3Deployment.Source.asset(props.assetPath)]
+            sources: [S3Deployment.Source.asset(assetPath)]
         });
     }
 }

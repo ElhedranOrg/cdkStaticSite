@@ -6,3 +6,6 @@ build:
 
 deploy: build
 	npm run deploy
+
+destroy:
+	npm run destroy
