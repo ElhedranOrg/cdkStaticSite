@@ -4,7 +4,7 @@ import * as Core from '@aws-cdk/core';
 import { StaticSite } from './StaticSite';
 import { ContextProvider } from '@aws-cdk/core';
 
-const defaultEnvTag = process.env.ENVIRONMENT;
+const defaultEnvTag = process.env.ENVIRONMENT
 
 const app = new Core.App({
     context: defaultEnvTag
@@ -23,9 +23,9 @@ class MainStack extends Core.Stack {
         new StaticSite(this, 'site', {
             zoneDomain: 'elhedran.com',
             siteDomain: 'sample.elhedran.com',
-            bucketName: 'sample-49ae079e',
+            bucketName: 'sample-aaaeeeaaa',
             assetPath: './assets/sampleContent/dist',
-            prefix: 'sample',
+            siteName: 'sample',
             isProduction: false
         })
     }
@@ -34,6 +34,6 @@ class MainStack extends Core.Stack {
 new MainStack(app, 'sample-stack', {
     env: {
         account: '057191276549',
-        region: 'ap-southeast-2'
+        region: 'us-east-1'
     }
 });

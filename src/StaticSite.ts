@@ -8,6 +8,7 @@ import * as CertManager from '@aws-cdk/aws-certificatemanager';
 import * as Lambda from '@aws-cdk/aws-lambda';
 import * as IAM from '@aws-cdk/aws-iam';
 import * as path from 'path';
+import { Stack } from '@aws-cdk/core';
 
 export interface StaticSiteProps {
     /**
@@ -29,7 +30,7 @@ export interface StaticSiteProps {
     /**
      * A prefix for naming resources deployed
      */
-    prefix?: string,
+    siteName?: string,
     /**
      * If true, cache duration is lengthened to improve site performance.
      * If false, cache duration is shortened to improve iteration of code changes.
@@ -50,7 +51,7 @@ export class StaticSite extends Core.Construct {
     constructor(scope: Core.Construct, id: string, props: StaticSiteProps) {
         super(scope, id);
 
-        const prefix = props.prefix || 'staticsite';
+        const prefix = props.siteName || 'staticsite';
 
         const hostedZone = Route53.HostedZone.fromLookup(this, 'zone', {
             domainName: props.zoneDomain
@@ -82,6 +83,14 @@ export class StaticSite extends Core.Construct {
             'spaHandler'
         ));
 
+        /*
+        TODO
+        Create a new stack in us-est
+        deploy lambda in that stack
+        export arn+version from that stack
+        import it into this stack
+        use imported arn for distribution
+        */
         const spaEdge = new Lambda.Function(this, 'spaHandler', {
             functionName: `${prefix}-spaEdge`,
             runtime: Lambda.Runtime.NODEJS_12_X,
@@ -94,9 +103,11 @@ export class StaticSite extends Core.Construct {
                 ),
             }),
         });
-        const spaEdgeVersion = new Lambda.Version(this, 'spaHandlerVersion', {
+        
+        const spaEdgeVersion = new Lambda.Version(this, 'v1', {
             lambda: spaEdge
-        })
+        });
+        spaEdgeVersion.addAlias('live');
 
         const distribution = new CloudFront.CloudFrontWebDistribution(this, 'distribution', {
             defaultRootObject: 'index.html',
