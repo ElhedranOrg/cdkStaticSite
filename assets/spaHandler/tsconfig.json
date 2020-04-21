@@ -1,0 +1,20 @@
+{
+    "compilerOptions": {
+      "outDir": "./dist",
+      "declaration": false,
+      "module": "commonjs",
+      "target": "es6",
+      "sourceMap": false,
+      "allowJs": false,
+      "forceConsistentCasingInFileNames": true,
+      "strictNullChecks": true,
+      "suppressImplicitAnyIndexErrors": true,
+      "noUnusedLocals": true,
+      "esModuleInterop": true,
+      "inlineSourceMap": false,
+      "typeRoots": [ "node_modules/@types"],
+      "baseUrl": "./"
+    },
+    "include": [ "index.ts" ]
+  }
+  

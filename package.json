@@ -1,0 +1,30 @@
+{
+  "name": "static",
+  "version": "1.0.0",
+  "description": "This is a CDK package for creating a static AWS websites based on the preferences of the script's creator.",
+  "main": "index.js",
+  "scripts": {
+    "predeploy": "npm run build",
+    "deploy": "cdk deploy",
+    "prebuild": "npm install",
+    "build": "tsc",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "@types/node": "^13.11.1",
+    "aws-cdk": "^1.32.2"
+  },
+  "dependencies": {
+    "@aws-cdk/aws-certificatemanager": "^1.32.2",
+    "@aws-cdk/aws-cloudformation": "^1.32.2",
+    "@aws-cdk/aws-lambda": "^1.32.2",
+    "@aws-cdk/aws-route53": "^1.32.2",
+    "@aws-cdk/aws-route53-targets": "^1.32.2",
+    "@aws-cdk/aws-s3": "^1.32.2",
+    "@aws-cdk/aws-s3-deployment": "^1.32.2",
+    "@aws-cdk/core": "^1.32.2",
+    "typescript": "^3.8.3"
+  }
+}
