@@ -30,6 +30,6 @@ class MainStack extends Core.Stack {
 new MainStack(app, 'sample-stack', {
     env: {
         account: '057191276549',
-        region: 'ap-southeast-2'
+        region: 'us-east-1'
     }
 });

@@ -6,11 +6,11 @@ import * as Route53 from '@aws-cdk/aws-route53';
 import * as Route53Targets from '@aws-cdk/aws-route53-targets';
 import * as CertManager from '@aws-cdk/aws-certificatemanager';
 import * as Lambda from '@aws-cdk/aws-lambda';
-import * as CustomResources from '@aws-cdk/custom-resources';
+import * as IAM from '@aws-cdk/aws-iam';
 
 import * as path from 'path';
 
-import { SpaStack } from './SpaStack';
+import { Stack } from '@aws-cdk/core';
 
 export interface StaticSiteProps {
     /**
@@ -63,45 +63,39 @@ export class StaticSite extends Core.Construct {
             props?.assetPath
             || path.resolve(__dirname, 'assets', 'sampleContent')
 
-        const scopeStack = Core.Stack.of(scope);
-        const spaStack = new SpaStack(
-            this, id + '-spaEdge',
-            {
-                env: {
-                    region: 'us-east-1',
-                    account: scopeStack.account
-                }
-            }
-        );
+        // until https://github.com/aws/aws-cdk/issues/1575 is resolved,
+        // easiest just to ensure this is created in us-east-1 so don't have
+        // to deal with cross stack issues.
+        if (Stack.of(this).region !== 'us-east-1') {
+            throw new Error(
+                'Currently this must be deployed in a stack in the "us-east-1" region. ' +
+                'This is due to constraints around Lambda@Edge.'
+            );
+        }
 
-        const edgeVersionArnResource = new CustomResources.AwsCustomResource(
-            this,
-            "GetParameter",
-            {
-                onUpdate: {
-                    // will also be called for a CREATE event
-                    service: "SSM",
-                    action: "getParameter",
-                    parameters: {
-                        Name: parameterName
-                    },
-                    region: "us-east-1",
-                    physicalResourceId: CustomResources.PhysicalResourceId.of(
-                        spaStack.versionTag // only need to update if version tag changes
-                    )
-                },
-                policy: CustomResources.AwsCustomResourcePolicy.fromSdkCalls({
-                    resources: CustomResources.AwsCustomResourcePolicy.ANY_RESOURCE
-                })
-            }
-        );
+        const spaCode = Lambda.Code.fromAsset(path.resolve(
+            __dirname,
+            'assets',
+            'spaHandler'
+        ));
 
-        const edgeVersionArn = edgeVersionArnResource.getResponseField('Parameter.Value');
-        const spaEdgeVersion = Lambda.Version.fromVersionArn(
-            this, 'spaEdgeVersion', edgeVersionArn
-        );
+        const spaEdge = new Lambda.Function(this, 'spaHandler', {
+            functionName: `${siteName}-spaEdge`,
+            runtime: Lambda.Runtime.NODEJS_12_X,
+            handler: 'index.handler',
+            code: spaCode,
+            role: new IAM.Role(this, 'spaHandlerRole', {
+                assumedBy: new IAM.CompositePrincipal(
+                    new IAM.ServicePrincipal('lambda.amazonaws.com'),
+                    new IAM.ServicePrincipal('edgelambda.amazonaws.com'),
+                ),
+            }),
+        });
 
-        Core.Stack.of(this).addDependency(spaStack);
+        const spaEdgeVersion = new Lambda.Version(this, 'v1', {
+            lambda: spaEdge
+        });
+        spaEdgeVersion.addAlias('live');
 
         const hostedZone = Route53.HostedZone.fromLookup(this, 'zone', {
             domainName: props.zoneDomain
