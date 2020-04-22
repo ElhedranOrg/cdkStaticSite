@@ -1,8 +1,13 @@
 {
-  "name": "cdk-static-site",
-  "version": "0.1.0",
+  "name": "@ElhedranOrg/cdk-static-site",
+  "version": "0.1.1",
   "description": "This is a CDK package for creating a static AWS websites based on the preferences of the script's creator.",
   "main": "dist/index.js",
+  "publishConfig": { "registry": "https://npm.pkg.github.com/" },
+  "repository": {
+    "type": "git",
+    "url": "ssh://git@github.com/ElhedranOrg/cdkStaticSite.git"
+  },
   "scripts": {
     "predeploy": "npm run build",
     "deploy": "cdk deploy",
