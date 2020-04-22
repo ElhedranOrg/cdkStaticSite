@@ -23,7 +23,7 @@ class MainStack extends Core.Stack {
             zoneDomain: 'elhedran.com',
             siteDomain: 'sample.elhedran.com',
             siteName
-        })
+        });
     }
 }
 

@@ -58,7 +58,6 @@ export class StaticSite extends Core.Construct {
         super(scope, id);
 
         const siteName = props?.siteName || 'staticsite';
-        const parameterName = `${siteName}-spaEdgeArn`;
         const assetPath =
             props?.assetPath
             || path.resolve(__dirname, 'assets', 'sampleContent')
