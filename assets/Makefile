@@ -1,2 +1,3 @@
 build:
-	make -C spaHandler
+	make -C spaHandler build
+	make -C sampleContent build
