@@ -11,3 +11,6 @@ deploy: build
 
 destroy:
 	npm run destroy
+
+publish: build
+	npm publish
