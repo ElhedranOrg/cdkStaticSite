@@ -1,9 +1,11 @@
 {
   "name": "@ElhedranOrg/cdk-static-site",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "This is a CDK package for creating a static AWS websites based on the preferences of the script's creator.",
   "main": "dist/index.js",
-  "publishConfig": { "registry": "https://npm.pkg.github.com/" },
+  "publishConfig": {
+    "registry": "https://npm.pkg.github.com/"
+  },
   "repository": {
     "type": "git",
     "url": "ssh://git@github.com/ElhedranOrg/cdkStaticSite.git"
@@ -19,19 +21,24 @@
   "author": "",
   "license": "ISC",
   "devDependencies": {
-    "@types/node": "^13.13.1",
-    "aws-cdk": "^1.34.0"
-  },
-  "dependencies": {
     "@aws-cdk/aws-certificatemanager": "^1.34.0",
     "@aws-cdk/aws-lambda": "^1.34.0",
     "@aws-cdk/aws-route53": "^1.34.0",
     "@aws-cdk/aws-route53-targets": "^1.34.0",
     "@aws-cdk/aws-s3": "^1.34.0",
     "@aws-cdk/aws-s3-deployment": "^1.34.0",
-    "@aws-cdk/aws-ssm": "^1.34.0",
     "@aws-cdk/core": "^1.34.0",
-    "@aws-cdk/custom-resources": "^1.34.0",
+    "aws-cdk": "^1.34.0",
     "typescript": "^3.8.3"
+  },
+  "dependencies": {},
+  "peerDependencies": {
+    "@aws-cdk/aws-certificatemanager": "^1.34.0",
+    "@aws-cdk/aws-lambda": "^1.34.0",
+    "@aws-cdk/aws-route53": "^1.34.0",
+    "@aws-cdk/aws-route53-targets": "^1.34.0",
+    "@aws-cdk/aws-s3": "^1.34.0",
+    "@aws-cdk/aws-s3-deployment": "^1.34.0",
+    "@aws-cdk/core": "^1.34.0"
   }
 }
