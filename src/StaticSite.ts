@@ -91,11 +91,6 @@ export class StaticSite extends Core.Construct {
             }),
         });
 
-        const spaEdgeVersion = new Lambda.Version(this, 'v1', {
-            lambda: spaEdge
-        });
-        spaEdgeVersion.addAlias('live');
-
         const hostedZone = Route53.HostedZone.fromLookup(this, 'zone', {
             domainName: props.zoneDomain
         });
@@ -119,7 +114,6 @@ export class StaticSite extends Core.Construct {
         );
 
         destinationBucket.grantRead(originAccessIdentity);
-
 
         const distribution = new CloudFront.CloudFrontWebDistribution(this, 'distribution', {
             defaultRootObject: 'index.html',
@@ -146,7 +140,7 @@ export class StaticSite extends Core.Construct {
                             lambdaFunctionAssociations: [
                                 {
                                     eventType: CloudFront.LambdaEdgeEventType.ORIGIN_REQUEST,
-                                    lambdaFunction: spaEdgeVersion,
+                                    lambdaFunction: spaEdge.currentVersion,
                                 }
                             ]
                         }
