@@ -1,6 +1,6 @@
 {
   "name": "@ElhedranOrg/cdk-static-site",
-  "version": "0.1.3",
+  "version": "0.1.4",
   "description": "This is a CDK package for creating a static AWS websites based on the preferences of the script's creator.",
   "main": "dist/index.js",
   "publishConfig": {
