@@ -17,11 +17,11 @@ The preferences implemented in this package are:
   the path is for front end routing.
 * Both IPV4 and IPV6 routes will be created.
 
-# Usage
+## Usage
 
 It is intended for this module to be pulled in as an NPM package.
 
-# Building
+## Building
 
 This build uses GNUMake and NPM in order to build the required resource.
 
